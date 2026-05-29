@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>神奈川補助金ナビ</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #f5f5f5; color: #333; }
+header { background: #1a5276; color: white; padding: 20px; text-align: center; }
+header h1 { font-size: 24px; font-weight: 600; }
+header p { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+.filters { background: white; padding: 16px 20px; display: flex; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 10; }
+select, input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: white; }
+input { flex: 1; min-width: 200px; }
+.count { padding: 10px 20px; font-size: 13px; color: #666; }
+.cards { padding: 0 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #eee; transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.card-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+.badge-target { background: #e8f4fd; color: #1a5276; }
+.badge-cat { background: #eafaf1; color: #1e8449; }
+.badge-area { background: #fef9e7; color: #7d6608; }
+.amount { font-size: 13px; font-weight: 600; color: #e74c3c; margin-bottom: 6px; }
+.summary { font-size: 12px; color: #666; line-height: 1.6; margin-bottom: 10px; }
+.card-link { display: inline-block; font-size: 12px; color: #1a5276; text-decoration: none; border: 1px solid #1a5276; padding: 4px 10px; border-radius: 6px; }
+.card-link:hover { background: #1a5276; color: white; }
+.loading { text-align: center; padding: 40px; color: #666; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏛 神奈川補助金ナビ</h1>
+  <p>神奈川県の補助金・助成金を地域・目的別に検索できます</p>
+</header>
+<div class="filters">
+  <input type="text" id="search" placeholder="🔍 キーワードで検索（例：移住、住宅、子育て）">
+  <select id="target"><option value="">対象：すべて</option><option value="個人">個人</option><option value="事業者">事業者</option></select>
+  <select id="category"><option value="">カテゴリ：すべて</option><option value="住宅">住宅</option><option value="移住">移住</option><option value="子育て">子育て</option><option value="省エネ">省エネ</option><option value="医療">医療</option><option value="教育">教育</option><option value="創業">創業</option><option value="雇用">雇用</option></select>
+  <select id="area"><option value="">地域：すべて</option></select>
+</div>
+<div class="count" id="count"></div>
+<div class="cards" id="cards"><div class="loading">読み込み中...</div></div>
+<script>
+let all = [];
+
+async function load() {
+  const res = await fetch('/api/subsidies');
+  all = await res.json();
+  const areas = [...new Set(all.map(d => d.area).filter(Boolean))].sort();
+  const sel = document.getElementById('area');
+  areas.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; sel.appendChild(o); });
+  render();
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const t = document.getElementById('target').value;
+  const c = document.getElementById('category').value;
+  const a = document.getElementById('area').value;
+  
+  const filtered = all.filter(d => {
+    if (t && d.target !== t) return false;
+    if (c && d.category !== c) return false;
+    if (a && d.area !== a) return false;
+    if (q && !d.title.toLowerCase().includes(q) && !d.summary.toLowerCase().includes(q) && !d.area.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  
+  document.getElementById('count').textContent = `${filtered.length}件見つかりました`;
+  document.getElementById('cards').innerHTML = filtered.length ? filtered.map(d => `
+<div class="card">
+  <p class="card-title">${d.title}</p>
+  <div class="badges">
+    <span class="badge badge-target">${d.target || '−'}</span>
+    <span class="badge badge-cat">${d.category || '−'}</span>
+    <span class="badge badge-area">${d.area || '−'}</span>
+  </div>
+  ${d.amount ? `<p class="amount">最大 ${Math.round(d.amount/10000).toLocaleString()}万円</p>` : ''}
+  <p class="summary">${d.summary}</p>
+  ${d.url ? `<a class="card-link" href="${d.url}" target="_blank">公式サイトを見る →</a>` : ''}
+</div>`).join('') : '<div class="loading">該当する補助金が見つかりませんでした</div>';
+}
+
+['search','target','category','area'].forEach(id => document.getElementById(id).addEventListener('input', render));
+load();
+</script>
+</body>
+</html>
