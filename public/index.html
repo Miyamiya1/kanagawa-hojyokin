@@ -41,7 +41,7 @@ input { flex: 1; min-width: 200px; }
   <select id="category"><option value="">カテゴリ：すべて</option><option value="住宅">住宅</option><option value="移住">移住</option><option value="子育て">子育て</option><option value="省エネ">省エネ</option><option value="医療">医療</option><option value="教育">教育</option><option value="創業">創業</option><option value="雇用">雇用</option><option value="設備投資">設備投資</option><option value="IT・デジタル">IT・デジタル</option><option value="販路開拓">販路開拓</option></select>
   <select id="area"><option value="">地域：すべて</option></select>
 </div>
-<div class="count" id="count"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 20px;"><div class="count" id="count"></div><div style="font-size:13px;color:#666;">今月 <span id="access-count" style="font-weight:600;color:#1a5276;">...</span> 人が利用</div></div>
 <div class="cards" id="cards"><div class="loading">読み込み中...</div></div>
 <script>
 let all = [];
@@ -89,3 +89,13 @@ load();
 </script>
 </body>
 </html>
+<script>
+(async () => {
+  try {
+    await fetch('/api/count', { method: 'POST' });
+    const res = await fetch('/api/count');
+    const data = await res.json();
+    document.getElementById('access-count').textContent = data.count.toLocaleString();
+  } catch(e) {}
+})();
+</script>
