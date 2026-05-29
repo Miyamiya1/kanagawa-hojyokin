@@ -73,7 +73,7 @@ function render() {
   const filtered = all.filter(d => {
     if (t && d.target !== t) return false;
     if (c && d.category !== c) return false;
-    if (a && d.area !== a) return false;
+    if (a && d.area !== a && d.area !== "全国" && d.area !== "神奈川県全域") return false;
     if (q && !d.title.toLowerCase().includes(q) && !d.summary.toLowerCase().includes(q) && !d.area.toLowerCase().includes(q)) return false;
     return true;
   });
