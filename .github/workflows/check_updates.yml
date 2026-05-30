@@ -2,8 +2,8 @@ name: 補助金URL自動チェック
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 毎日午前9時（JST）
-  workflow_dispatch:  # 手動実行も可能
+    - cron: '0 0 1 * *'  # 毎月1日午前9時（JST）
+  workflow_dispatch:
 
 jobs:
   check:
@@ -19,3 +19,9 @@ jobs:
           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         run: python crawler/check_updates.py
+      - name: 新規補助金発見
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: python crawler/discover_new.py
